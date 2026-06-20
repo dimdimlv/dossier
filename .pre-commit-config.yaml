@@ -1,0 +1,31 @@
+# ─────────────────────────────────────────────────────────────
+# Dossier — pre-commit configuration
+#
+# Implements defense layer 2 from ADR-001: block secrets and
+# personal data from entering git history, automatically, before
+# every commit.
+#
+# Setup (once, after cloning):   pre-commit install
+# Run manually on all files:     pre-commit run --all-files
+# ─────────────────────────────────────────────────────────────
+
+repos:
+  # ── Secret scanning (Yelp detect-secrets) ──────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # ── Basic hygiene hooks (maintained by the pre-commit team) ─
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace      # strip trailing spaces
+      - id: end-of-file-fixer        # ensure files end in a newline
+      - id: check-yaml               # validate YAML syntax
+      - id: check-added-large-files  # block accidentally huge files
+        args: ['--maxkb=1024']
+      - id: check-merge-conflict     # block unresolved conflict markers
+      - id: check-case-conflict      # catch name clashes on case-insensitive FS (macOS!)
+      - id: detect-private-key       # block committed private keys
