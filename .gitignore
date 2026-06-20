@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────
+# Dossier — .gitignore (public repo)
+#
+# Two jobs (per ADR-001):
+#   1. Keep personal data and secrets out of public history.
+#   2. Keep environment/build noise out of the repo.
+# ─────────────────────────────────────────────────────────────
+
+# ── Secrets & personal data (ADR-001, defense layer 1) ───────
+# Never commit real config or any personal data into the public repo.
+.env
+.env.*
+!.env.example
+*.local
+
+# Any locally-present personal data directories.
+# (Real data lives in the separate private `dossier-data` repo,
+#  but guard against accidental copies landing here.)
+data/
+output/
+generated/
+*.docx
+*.pdf
+!docs/**/*.pdf
+cv_*.md
+cover_*.md
+
+# Local application database, if one ends up here during dev.
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+*.egg
+
+# Test / coverage / type-check caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ── uv / virtual environment ─────────────────────────────────
+# The virtual environment itself is never committed — it is
+# rebuilt from pyproject.toml + uv.lock on any machine.
+.venv/
+venv/
+# Note: uv.lock IS committed (it pins exact dependency versions).
+# It is intentionally NOT ignored here.
+
+# ── Editors / IDE ────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── macOS ────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride

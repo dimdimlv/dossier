@@ -1,0 +1,21 @@
+# Architecture Decision Records
+
+This directory contains the Architecture Decision Records (ADRs) for Dossier.
+
+An ADR captures a single significant architectural decision: the context in which it was made, the alternatives considered, the decision itself, and its consequences. ADRs are immutable once accepted — if a decision changes, a new ADR is added that supersedes the old one, rather than editing history.
+
+Format follows Michael Nygard's ADR template, extended with an explicit "Considered alternatives" section.
+
+## Index
+
+| # | Title | Status |
+|---|-------|--------|
+| [001](ADR-001-public-private-data-separation.md) | Public/private repository separation for code and personal data | Accepted |
+| [002](ADR-002-mit-license.md) | MIT license for the public code repository | Accepted |
+
+## Status legend
+
+- **Proposed** — under discussion, not yet in effect
+- **Accepted** — decided and currently in force
+- **Deprecated** — no longer applies, not replaced
+- **Superseded by ADR-NNN** — replaced by a later decision
