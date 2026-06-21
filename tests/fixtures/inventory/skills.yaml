@@ -1,0 +1,21 @@
+# Synthetic fixture — fake data only (ADR-001).
+- name: Python
+  category: language
+  level: expert
+  years: 9
+  last_used: 2026
+  aliases: [py]
+- name: AWS
+  category: platform
+  level: advanced
+  years: 6
+  last_used: 2026
+- name: PostgreSQL
+  category: tool
+  level: advanced
+  years: 8
+  last_used: 2025
+- name: Team leadership
+  category: soft
+  level: advanced
+  years: 4

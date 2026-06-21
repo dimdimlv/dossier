@@ -1,0 +1,8 @@
+# Synthetic fixture — fake data only (ADR-001).
+- institution: University of Examplia
+  degree: BSc Computer Science
+  field: Computer Science
+  start: "2010-09"
+  end: "2013-06"
+  location: Examplia
+  details: Graduated with honours; thesis on distributed consensus.

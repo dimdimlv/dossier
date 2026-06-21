@@ -1,0 +1,17 @@
+# Synthetic fixture — fake data only (ADR-001). Not real PII.
+full_name: Jane Doe
+headline: Staff Software Engineer — platforms & developer experience
+summary: >
+  Backend-leaning engineer with a decade building payment and platform systems.
+  Comfortable from database internals to team leadership.
+email: jane.doe@example.com
+phone: "+371 20000000"
+location: Riga, Latvia
+links:
+  - label: GitHub
+    url: https://github.com/janedoe
+  - label: LinkedIn
+    url: https://www.linkedin.com/in/janedoe/
+languages:
+  - English
+  - Latvian
