@@ -13,6 +13,7 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [001](ADR-001-public-private-data-separation.md) | Public/private repository separation for code and personal data | Accepted |
 | [002](ADR-002-mit-license.md) | MIT license for the public code repository | Accepted |
 | [003](ADR-003-python-project-layout.md) | Python project layout: src/ + packaged application via uv | Accepted |
+| [004](ADR-004-inventory-schema.md) | Inventory schema: hybrid YAML + Markdown frontmatter, validated with Pydantic v2 | Accepted |
 
 ## Status legend
 

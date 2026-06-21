@@ -46,7 +46,7 @@ Rationale: see [`docs/adr/ADR-001-public-private-data-separation.md`](docs/adr/A
 
 Three layers, built incrementally:
 
-1. **Inventory** — structured store of skills, projects, achievements. Markdown files under version control.
+1. **Inventory** — structured store of skills, experience, achievements, and education. YAML for list-like data and Markdown-with-frontmatter for narrative roles, all under version control. Format reference: [`docs/inventory-schema.md`](docs/inventory-schema.md).
 2. **Engine** — the core pipeline: `JD → analysis → assembly → CV + cover letter + gap report`. Uses the Anthropic Claude API.
 3. **Tracker** — application log, status transitions, follow-up reminders.
 
