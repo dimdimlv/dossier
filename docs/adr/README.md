@@ -15,6 +15,7 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [003](ADR-003-python-project-layout.md) | Python project layout: src/ + packaged application via uv | Accepted |
 | [004](ADR-004-inventory-schema.md) | Inventory schema: hybrid YAML + Markdown frontmatter, validated with Pydantic v2 | Accepted |
 | [005](ADR-005-application-tracker-persistence.md) | Application tracker persistence: SQLite via SQLAlchemy 2.0 + Alembic, documents as hashed files | Accepted |
+| [006](ADR-006-engine-jd-analysis.md) | Engine: Anthropic SDK + structured outputs, hybrid JD gap analysis | Accepted |
 
 ## Status legend
 
