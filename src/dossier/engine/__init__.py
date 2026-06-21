@@ -7,6 +7,7 @@ from dossier.engine.client import (
     AnthropicClient,
     EngineError,
     LLMClient,
+    OpenAIClient,
     build_default_client,
 )
 from dossier.engine.models import (
@@ -25,6 +26,7 @@ __all__ = [
     "GapReport",
     "JobRequirements",
     "LLMClient",
+    "OpenAIClient",
     "RequirementCoverage",
     "SemanticAssessment",
     "SkillRequirement",

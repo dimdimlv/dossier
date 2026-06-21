@@ -124,6 +124,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     analyze.add_argument("--language", default=None, help="Analysis language (ISO 639-1)")
     analyze.add_argument(
+        "--provider",
+        choices=["anthropic", "openai"],
+        default=None,
+        help="LLM provider (defaults to $DOSSIER_LLM_PROVIDER, else anthropic)",
+    )
+    analyze.add_argument(
         "--json", action="store_true", dest="as_json", help="Output JSON"
     )
     analyze.add_argument(
@@ -371,7 +377,7 @@ def _analyze(args: argparse.Namespace) -> int:
         return 1
 
     language = args.language or get_default_language()
-    client = engine.build_default_client()
+    client = engine.build_default_client(provider=args.provider)
     analysis = engine.analyze_jd(
         jd_text,
         inventory,

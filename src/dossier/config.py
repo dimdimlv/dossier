@@ -18,10 +18,15 @@ FOLLOWUP_DAYS_ENV = "DOSSIER_FOLLOWUP_DAYS"
 MODEL_ENV = "ANTHROPIC_MODEL"
 API_KEY_ENV = "ANTHROPIC_API_KEY"  # pragma: allowlist secret
 LANGUAGE_ENV = "DOSSIER_DEFAULT_LANGUAGE"
+PROVIDER_ENV = "DOSSIER_LLM_PROVIDER"
+OPENAI_API_KEY_ENV = "OPENAI_API_KEY"  # pragma: allowlist secret
+OPENAI_MODEL_ENV = "OPENAI_MODEL"
 
 DEFAULT_FOLLOWUP_DAYS = 10
 DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_LANGUAGE = "en"
+DEFAULT_PROVIDER = "anthropic"
+SUPPORTED_PROVIDERS = ("anthropic", "openai")
 
 
 class ConfigError(Exception):
@@ -102,6 +107,49 @@ def get_default_language(load_env: bool = True) -> str:
     if load_env:
         load_dotenv()
     return os.environ.get(LANGUAGE_ENV) or DEFAULT_LANGUAGE
+
+
+def get_provider(load_env: bool = True) -> str:
+    """Return the configured LLM provider (``anthropic`` or ``openai``)."""
+    if load_env:
+        load_dotenv()
+    provider = (os.environ.get(PROVIDER_ENV) or DEFAULT_PROVIDER).lower()
+    if provider not in SUPPORTED_PROVIDERS:
+        raise ConfigError(
+            f"{PROVIDER_ENV}={provider!r} is not supported; "
+            f"choose one of {', '.join(SUPPORTED_PROVIDERS)}."
+        )
+    return provider
+
+
+def get_openai_api_key(load_env: bool = True) -> str:
+    """Return the OpenAI API key; raise ``ConfigError`` if it is not set."""
+    if load_env:
+        load_dotenv()
+    key = os.environ.get(OPENAI_API_KEY_ENV)
+    if not key:
+        raise ConfigError(
+            f"{OPENAI_API_KEY_ENV} is not set. Add it to your .env to use the "
+            "OpenAI provider."
+        )
+    return key
+
+
+def get_openai_model(load_env: bool = True) -> str:
+    """Return the OpenAI model; raise ``ConfigError`` if it is not set.
+
+    There is no default: the chosen model must support structured outputs, so the
+    user picks it explicitly.
+    """
+    if load_env:
+        load_dotenv()
+    model = os.environ.get(OPENAI_MODEL_ENV)
+    if not model:
+        raise ConfigError(
+            f"{OPENAI_MODEL_ENV} is not set. Set it in your .env to a model that "
+            "supports structured outputs (e.g. a current gpt-4o/gpt-4.1-class model)."
+        )
+    return model
 
 
 def get_followup_days(load_env: bool = True) -> int:

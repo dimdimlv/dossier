@@ -20,7 +20,7 @@ def fake_client(monkeypatch: pytest.MonkeyPatch) -> FakeLLMClient:
         requirements_with("Python", "Kubernetes"),
         assessment_gap("Kubernetes", suggestions=["Emphasise platform/AWS experience"]),
     )
-    monkeypatch.setattr(engine, "build_default_client", lambda: client)
+    monkeypatch.setattr(engine, "build_default_client", lambda provider=None: client)
     return client
 
 

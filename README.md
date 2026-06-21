@@ -47,7 +47,7 @@ Rationale: see [`docs/adr/ADR-001-public-private-data-separation.md`](docs/adr/A
 Three layers, built incrementally:
 
 1. **Inventory** — structured store of skills, experience, achievements, and education. YAML for list-like data and Markdown-with-frontmatter for narrative roles, all under version control. Format reference: [`docs/inventory-schema.md`](docs/inventory-schema.md).
-2. **Engine** — the core pipeline: `JD → analysis → assembly → CV + cover letter + gap report`. Uses the Anthropic Claude API. JD parsing and gap analysis are implemented; reference: [`docs/engine.md`](docs/engine.md).
+2. **Engine** — the core pipeline: `JD → analysis → assembly → CV + cover letter + gap report`. Uses the Anthropic Claude API (or OpenAI — provider is configurable). JD parsing and gap analysis are implemented; reference: [`docs/engine.md`](docs/engine.md).
 3. **Tracker** — application log, status transitions, follow-up reminders, and an immutable record of the CV/cover letter sent with each application. SQLite via SQLAlchemy + Alembic. Reference: [`docs/tracker-schema.md`](docs/tracker-schema.md).
 
 The project follows a *walking-skeleton* approach: the simplest end-to-end version of all three layers ships first, then each layer is hardened in subsequent iterations.

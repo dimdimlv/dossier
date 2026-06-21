@@ -9,6 +9,23 @@ your inventory to produce a **gap report**. Rationale and alternatives:
 > `ANTHROPIC_API_KEY`. Both live in your local, gitignored `.env` (see `.env.example`). JD text and
 > saved analyses are personal data and are written only under `DOSSIER_DATA_PATH` (ADR-001).
 
+## Providers
+
+The engine can use **Anthropic** (default) or **OpenAI**, selected by `DOSSIER_LLM_PROVIDER`
+(`anthropic` | `openai`) or the `--provider` flag on `analyze`. Both use their official SDK with
+structured outputs — there is no compatibility shim. Rationale: [ADR-007](adr/ADR-007-multi-provider-llm.md).
+
+| Provider | Key | Model | Notes |
+|---|---|---|---|
+| `anthropic` (default) | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` (default `claude-sonnet-4-6`) | |
+| `openai` | `OPENAI_API_KEY` | `OPENAI_MODEL` (**required**, no default) | pick a model that supports structured outputs |
+
+```bash
+# Use OpenAI for a single run (env vars must be set):
+uv run dossier analyze --jd jd.txt --provider openai
+# Or make it the default in .env:  DOSSIER_LLM_PROVIDER=openai
+```
+
 ## How it works (hybrid analysis)
 
 1. **Extract** — Claude parses the JD into structured `JobRequirements` (role, seniority, detected
