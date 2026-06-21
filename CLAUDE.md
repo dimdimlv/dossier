@@ -34,4 +34,4 @@ Dossier is a personal job-search system: a structured inventory of professional 
 
 ## Status
 
-Bootstrapping complete (M0). Next: M1 — inventory schema and first Python code. Roadmap in [`README.md`](README.md). Detailed, changing task state lives in issues, not here.
+M1 in progress. Python project initialized: `src/` layout, packaged application via `uv`, Python 3.13, dev tooling (pytest, ruff, mypy); layout rationale in [ADR-003](docs/adr/ADR-003-python-project-layout.md). Next: inventory schema and first inventory entries. Roadmap in [`README.md`](README.md). Detailed, changing task state lives in issues, not here.
