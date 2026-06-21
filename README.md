@@ -48,7 +48,7 @@ Three layers, built incrementally:
 
 1. **Inventory** — structured store of skills, experience, achievements, and education. YAML for list-like data and Markdown-with-frontmatter for narrative roles, all under version control. Format reference: [`docs/inventory-schema.md`](docs/inventory-schema.md).
 2. **Engine** — the core pipeline: `JD → analysis → assembly → CV + cover letter + gap report`. Uses the Anthropic Claude API.
-3. **Tracker** — application log, status transitions, follow-up reminders.
+3. **Tracker** — application log, status transitions, follow-up reminders, and an immutable record of the CV/cover letter sent with each application. SQLite via SQLAlchemy + Alembic. Reference: [`docs/tracker-schema.md`](docs/tracker-schema.md).
 
 The project follows a *walking-skeleton* approach: the simplest end-to-end version of all three layers ships first, then each layer is hardened in subsequent iterations.
 
@@ -68,12 +68,12 @@ Choices are recorded as ADRs as they are made.
 
 ## Roadmap
 
-- [ ] **M0** — Project bootstrapped (README, repo layout, first ADRs)
-- [ ] **M1** — Inventory schema and first real entries
+- [x] **M0** — Project bootstrapped (README, repo layout, first ADRs)
+- [x] **M1** — Inventory schema (real entries pending)
 - [ ] **M2** — JD parser and gap analysis
 - [ ] **M3** — CV generator
 - [ ] **M4** — Cover letter generator
-- [ ] **M5** — Application tracker with reminders
+- [~] **M5** — Application tracker with reminders — *foundation built early: schema, status history, document versioning, and follow-ups*
 - [ ] **M6** — Containerization (Docker, docker-compose)
 - [ ] **M7** — CI/CD pipeline (GitHub Actions)
 - [ ] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana)

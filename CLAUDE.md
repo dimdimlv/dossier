@@ -34,4 +34,4 @@ Dossier is a personal job-search system: a structured inventory of professional 
 
 ## Status
 
-M1 in progress. Python project initialized: `src/` layout, packaged application via `uv`, Python 3.13, dev tooling (pytest, ruff, mypy); layout rationale in [ADR-003](docs/adr/ADR-003-python-project-layout.md). Next: inventory schema and first inventory entries. Roadmap in [`README.md`](README.md). Detailed, changing task state lives in issues, not here.
+Project initialized (`src/` layout, packaged via `uv`, Python 3.13, pytest/ruff/mypy — [ADR-003](docs/adr/ADR-003-python-project-layout.md)). **M1 inventory schema** done: Pydantic models + loader + `dossier inventory validate` ([ADR-004](docs/adr/ADR-004-inventory-schema.md), [schema](docs/inventory-schema.md)). **M5 tracker foundation** built early: SQLite + SQLAlchemy 2.0 + Alembic, `dossier track`/`dossier db` CLI, immutable hashed document storage ([ADR-005](docs/adr/ADR-005-application-tracker-persistence.md), [schema](docs/tracker-schema.md)). Next: real inventory entries, then M2 (JD parser). Roadmap in [`README.md`](README.md). Detailed task state lives in issues, not here.
