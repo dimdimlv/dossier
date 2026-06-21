@@ -1,0 +1,17 @@
+Senior Backend Engineer — Payments Platform
+
+We are looking for a senior backend engineer to join our payments team. You will
+design and operate high-throughput services that move money reliably.
+
+Requirements:
+- 6+ years of professional software engineering experience
+- Strong Python skills and experience with PostgreSQL
+- Hands-on experience running services on AWS
+- Experience with Kubernetes and container orchestration
+- Familiarity with event-driven architectures
+
+Nice to have:
+- Experience leading a small team
+- Exposure to Go
+
+Location: Riga, Latvia (hybrid).

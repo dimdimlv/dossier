@@ -15,8 +15,13 @@ from dotenv import load_dotenv
 DATA_PATH_ENV = "DOSSIER_DATA_PATH"
 DATABASE_URL_ENV = "DOSSIER_DATABASE_URL"
 FOLLOWUP_DAYS_ENV = "DOSSIER_FOLLOWUP_DAYS"
+MODEL_ENV = "ANTHROPIC_MODEL"
+API_KEY_ENV = "ANTHROPIC_API_KEY"  # pragma: allowlist secret
+LANGUAGE_ENV = "DOSSIER_DEFAULT_LANGUAGE"
 
 DEFAULT_FOLLOWUP_DAYS = 10
+DEFAULT_MODEL = "claude-sonnet-4-6"
+DEFAULT_LANGUAGE = "en"
 
 
 class ConfigError(Exception):
@@ -66,6 +71,37 @@ def get_database_url(load_env: bool = True) -> str:
     if override:
         return override
     return f"sqlite:///{get_tracker_db_path(load_env=False)}"
+
+
+def get_analysis_dir(load_env: bool = True) -> Path:
+    """Return the path to the saved-analysis directory inside ``dossier-data``."""
+    return get_data_path(load_env=load_env) / "analysis"
+
+
+def get_model(load_env: bool = True) -> str:
+    """Return the Anthropic model identifier (Twelve-Factor: from the environment)."""
+    if load_env:
+        load_dotenv()
+    return os.environ.get(MODEL_ENV) or DEFAULT_MODEL
+
+
+def get_anthropic_api_key(load_env: bool = True) -> str:
+    """Return the Anthropic API key; raise ``ConfigError`` if it is not set."""
+    if load_env:
+        load_dotenv()
+    key = os.environ.get(API_KEY_ENV)
+    if not key:
+        raise ConfigError(
+            f"{API_KEY_ENV} is not set. Add it to your .env to run engine commands."
+        )
+    return key
+
+
+def get_default_language(load_env: bool = True) -> str:
+    """Return the default output/analysis language (ISO 639-1)."""
+    if load_env:
+        load_dotenv()
+    return os.environ.get(LANGUAGE_ENV) or DEFAULT_LANGUAGE
 
 
 def get_followup_days(load_env: bool = True) -> int:

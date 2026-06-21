@@ -12,15 +12,18 @@ import os
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from dossier import engine
 from dossier.config import (
     DATABASE_URL_ENV,
     ConfigError,
+    get_analysis_dir,
     get_applications_dir,
+    get_default_language,
     get_inventory_path,
 )
 from dossier.db import get_engine, session_scope
@@ -107,6 +110,31 @@ def _build_parser() -> argparse.ArgumentParser:
         "followups", help="List applications with a due follow-up"
     )
     followups.add_argument("--as-of", type=date.fromisoformat, default=None)
+
+    # analyze
+    analyze = commands.add_parser(
+        "analyze", help="Analyse a job description against the inventory"
+    )
+    analyze.add_argument("--jd", required=True, help="JD file path, or '-' for stdin")
+    analyze.add_argument(
+        "--inventory",
+        type=Path,
+        default=None,
+        help="Inventory directory (defaults to $DOSSIER_DATA_PATH/inventory)",
+    )
+    analyze.add_argument("--language", default=None, help="Analysis language (ISO 639-1)")
+    analyze.add_argument(
+        "--json", action="store_true", dest="as_json", help="Output JSON"
+    )
+    analyze.add_argument(
+        "--save", action="store_true", help="Save JSON + markdown under DOSSIER_DATA_PATH"
+    )
+    analyze.add_argument(
+        "--no-llm-gaps",
+        action="store_true",
+        dest="no_llm_gaps",
+        help="Deterministic matching only (no second API call)",
+    )
 
     return parser
 
@@ -288,6 +316,93 @@ def _dispatch_track(args: argparse.Namespace) -> int:
     return 2  # pragma: no cover
 
 
+# ── Analyze ──────────────────────────────────────────────────────────────────
+def _slug(text: str) -> str:
+    keep = [c.lower() if c.isalnum() else "-" for c in text.strip()]
+    slug = "".join(keep).strip("-")
+    while "--" in slug:
+        slug = slug.replace("--", "-")
+    return slug or "jd"
+
+
+def _analysis_to_markdown(analysis: engine.Analysis) -> str:
+    req = analysis.requirements
+    gaps = analysis.gaps
+    lines = [
+        f"# JD analysis — {req.role_title or 'role'}"
+        f"{f' at {req.company}' if req.company else ''}",
+        "",
+        f"- Language: {req.language}",
+        f"- Seniority: {req.seniority or '—'}",
+        f"- Location: {req.location or '—'}  |  Work mode: {req.work_mode or '—'}",
+        f"- Experience: {req.years_experience or '—'}",
+        "",
+        f"**Coverage:** {gaps.summary}",
+        "",
+        "## Requirement coverage",
+    ]
+    icons = {"covered": "✓", "partial": "~", "gap": "✗"}
+    for c in gaps.coverages:
+        evidence = f" — {', '.join(c.evidence)}" if c.evidence else ""
+        note = f" ({c.note})" if c.note else ""
+        lines.append(f"- {icons.get(c.status, '?')} {c.requirement}{evidence}{note}")
+    if gaps.suggestions:
+        lines += ["", "## Suggestions to emphasise", *(f"- {s}" for s in gaps.suggestions)]
+    if req.responsibilities:
+        lines += ["", "## Responsibilities", *(f"- {r}" for r in req.responsibilities)]
+    return "\n".join(lines) + "\n"
+
+
+def _analyze(args: argparse.Namespace) -> int:
+    if args.jd == "-":
+        jd_text = sys.stdin.read()
+    else:
+        jd_path = Path(args.jd)
+        if not jd_path.is_file():
+            print(f"JD file not found: {jd_path}", file=sys.stderr)
+            return 1
+        jd_text = jd_path.read_text(encoding="utf-8")
+
+    inventory_dir = args.inventory if args.inventory is not None else get_inventory_path()
+    try:
+        inventory = load_inventory(inventory_dir)
+    except InventoryError as exc:
+        print(f"Inventory is invalid:\n{exc}", file=sys.stderr)
+        return 1
+
+    language = args.language or get_default_language()
+    client = engine.build_default_client()
+    analysis = engine.analyze_jd(
+        jd_text,
+        inventory,
+        client,
+        language=language,
+        use_llm_gaps=not args.no_llm_gaps,
+    )
+
+    if args.as_json:
+        print(analysis.model_dump_json(indent=2))
+    else:
+        print(_analysis_to_markdown(analysis))
+
+    if args.save:
+        req = analysis.requirements
+        stem = _slug(req.company or req.role_title or "jd")
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%S")
+        out_dir = get_analysis_dir()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        base = out_dir / f"{stem}-{timestamp}"
+        base.with_suffix(".json").write_text(
+            analysis.model_dump_json(indent=2), encoding="utf-8"
+        )
+        base.with_suffix(".md").write_text(
+            _analysis_to_markdown(analysis), encoding="utf-8"
+        )
+        print(f"✓ Saved analysis to {base.with_suffix('.json')} and .md")
+
+    return 0
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────
 def run(argv: list[str] | None = None) -> int:
     """Parse ``argv`` and dispatch. Returns a process exit code."""
@@ -299,11 +414,16 @@ def run(argv: list[str] | None = None) -> int:
             return _db_upgrade()
         if args.command == "track":
             return _dispatch_track(args)
+        if args.command == "analyze":
+            return _analyze(args)
     except ConfigError as exc:
         print(f"Configuration error: {exc}", file=sys.stderr)
         return 1
     except TrackerError as exc:
         print(f"Tracker error: {exc}", file=sys.stderr)
+        return 1
+    except engine.EngineError as exc:
+        print(f"Engine error: {exc}", file=sys.stderr)
         return 1
     return 2  # pragma: no cover - argparse enforces valid subcommands
 
