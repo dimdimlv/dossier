@@ -17,6 +17,7 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [005](ADR-005-application-tracker-persistence.md) | Application tracker persistence: SQLite via SQLAlchemy 2.0 + Alembic, documents as hashed files | Accepted |
 | [006](ADR-006-engine-jd-analysis.md) | Engine: Anthropic SDK + structured outputs, hybrid JD gap analysis | Accepted |
 | [007](ADR-007-multi-provider-llm.md) | Multi-provider LLM support: pluggable engine clients (Anthropic default, OpenAI optional) | Accepted |
+| [008](ADR-008-cv-generation.md) | CV generation: Jinja2 templating, hybrid deterministic selection + LLM phrasing, draft/frozen separation | Accepted |
 
 ## Status legend
 

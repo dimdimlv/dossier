@@ -19,11 +19,17 @@ from dossier.config import (
     get_provider,
 )
 from dossier.engine.models import (
+    CVTailoring,
     JobRequirements,
+    SelectedAchievement,
     SemanticAssessment,
     SkillRequirement,
 )
-from dossier.engine.prompts import GAP_ASSESSMENT_SYSTEM, JD_EXTRACTION_SYSTEM
+from dossier.engine.prompts import (
+    CV_TAILORING_SYSTEM,
+    GAP_ASSESSMENT_SYSTEM,
+    JD_EXTRACTION_SYSTEM,
+)
 
 if TYPE_CHECKING:
     import anthropic
@@ -47,6 +53,17 @@ class LLMClient(Protocol):
         self, requirements: list[SkillRequirement], inventory_digest: str
     ) -> SemanticAssessment: ...
 
+    def tailor_cv(
+        self,
+        *,
+        full_name: str,
+        profile_summary: str | None,
+        achievements: list[SelectedAchievement],
+        role_title: str | None,
+        keywords: list[str],
+        language: str,
+    ) -> CVTailoring: ...
+
 
 # ── Shared prompt construction ───────────────────────────────────────────────
 def _extraction_user(jd_text: str, language: str) -> str:
@@ -60,6 +77,25 @@ def _assessment_user(
     return (
         f"Candidate inventory digest:\n\n{inventory_digest}\n\n"
         f"Requirements to assess (JSON):\n\n{reqs}"
+    )
+
+
+def _tailoring_user(
+    full_name: str,
+    profile_summary: str | None,
+    achievements: list[SelectedAchievement],
+    role_title: str | None,
+    keywords: list[str],
+    language: str,
+) -> str:
+    items = json.dumps([a.model_dump() for a in achievements], ensure_ascii=False)
+    return (
+        f"Candidate: {full_name}\n"
+        f"Profile summary: {profile_summary or '—'}\n"
+        f"Target role: {role_title or '—'}\n"
+        f"Target keywords: {', '.join(keywords) or '—'}\n"
+        f"Output language: {language}\n\n"
+        f"Selected achievements (JSON):\n\n{items}"
     )
 
 
@@ -87,6 +123,26 @@ class _ParsingClient:
             SemanticAssessment,
         )
         assert isinstance(result, SemanticAssessment)
+        return result
+
+    def tailor_cv(
+        self,
+        *,
+        full_name: str,
+        profile_summary: str | None,
+        achievements: list[SelectedAchievement],
+        role_title: str | None,
+        keywords: list[str],
+        language: str,
+    ) -> CVTailoring:
+        result = self._parse(
+            CV_TAILORING_SYSTEM,
+            _tailoring_user(
+                full_name, profile_summary, achievements, role_title, keywords, language
+            ),
+            CVTailoring,
+        )
+        assert isinstance(result, CVTailoring)
         return result
 
 

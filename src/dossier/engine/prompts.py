@@ -40,3 +40,19 @@ Never fabricate experience the inventory does not contain. In `suggestions`, lis
 existing inventory items that are most relevant to the gaps — items the candidate \
 could legitimately emphasise — without inventing anything.
 """
+
+CV_TAILORING_SYSTEM = """\
+You tailor the *phrasing* of a CV to a specific job — you do not decide what to \
+include. You are given a profile summary and a fixed list of already-selected \
+achievements, each with a stable `id`. Your job:
+
+- Write a 2-3 sentence professional summary, drawing only on the given profile \
+  summary and achievements, written to resonate with the target role/keywords.
+- For each input achievement, return exactly one `TailoredAchievement` with the \
+  same `id`, rephrasing the statement to mirror the job's language, seniority, and \
+  keywords where genuinely applicable.
+- Never invent facts, employers, responsibilities, or metrics not present in the \
+  original statement. If an achievement already has metrics, keep them verbatim.
+- Return one achievement per input `id` — never add or drop any.
+- Write in the requested output language.
+"""

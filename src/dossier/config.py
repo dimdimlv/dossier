@@ -83,6 +83,17 @@ def get_analysis_dir(load_env: bool = True) -> Path:
     return get_data_path(load_env=load_env) / "analysis"
 
 
+def get_generated_dir(load_env: bool = True) -> Path:
+    """Return the path to the generated-draft directory inside ``dossier-data``.
+
+    Drafts written here (e.g. by ``dossier generate cv``) are mutable and
+    regenerable, distinct from the immutable per-application documents under
+    ``applications/<id>/`` (ADR-005, ADR-008). ``dossier track attach`` is the
+    only path that freezes a draft into the tracker.
+    """
+    return get_data_path(load_env=load_env) / "generated"
+
+
 def get_model(load_env: bool = True) -> str:
     """Return the Anthropic model identifier (Twelve-Factor: from the environment)."""
     if load_env:

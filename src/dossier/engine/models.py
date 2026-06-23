@@ -67,3 +67,30 @@ class Analysis(_Strict):
 
     requirements: JobRequirements
     gaps: GapReport
+
+
+class SelectedAchievement(_Strict):
+    """An achievement chosen deterministically (see ``generator.selector``), sent
+    to the LLM for phrasing only — the LLM never decides what is included."""
+
+    id: str
+    company: str
+    title: str
+    original_statement: str
+    metrics: list[str] = Field(default_factory=list)
+
+
+class TailoredAchievement(_Strict):
+    """The LLM's rephrasing of one :class:`SelectedAchievement`, keyed by ``id``."""
+
+    id: str
+    statement: str
+
+
+class CVTailoring(_Strict):
+    """Structured output for CV phrasing: a tailored summary plus one rephrased
+    statement per input achievement, echoed back by ``id`` so generation code can
+    detect (and reject) any dropped or invented achievement."""
+
+    summary: str
+    achievements: list[TailoredAchievement] = Field(default_factory=list)

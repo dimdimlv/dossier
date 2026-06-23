@@ -8,7 +8,13 @@ import openai
 import pytest
 
 from dossier.engine import EngineError, OpenAIClient
-from dossier.engine.models import JobRequirements, SemanticAssessment
+from dossier.engine.models import (
+    CVTailoring,
+    JobRequirements,
+    SelectedAchievement,
+    SemanticAssessment,
+    TailoredAchievement,
+)
 
 
 class _Message:
@@ -89,3 +95,25 @@ def test_none_parsed_is_engine_error() -> None:
     fake = FakeOpenAI(None)
     with pytest.raises(EngineError, match="no structured output"):
         _client(fake).extract_requirements("jd", "en")
+
+
+def test_tailor_cv_returns_parsed() -> None:
+    fake = FakeOpenAI(
+        CVTailoring(
+            summary="Tailored.",
+            achievements=[TailoredAchievement(id="0-0", statement="Rephrased.")],
+        )
+    )
+    achievement = SelectedAchievement(
+        id="0-0", company="Acme", title="Engineer", original_statement="Did a thing."
+    )
+    result = _client(fake).tailor_cv(
+        full_name="Jane Doe",
+        profile_summary="Backend engineer.",
+        achievements=[achievement],
+        role_title="Senior Backend Engineer",
+        keywords=["Python"],
+        language="en",
+    )
+    assert isinstance(result, CVTailoring)
+    assert result.achievements[0].id == "0-0"

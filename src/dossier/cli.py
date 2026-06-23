@@ -17,13 +17,14 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from dossier import engine
+from dossier import engine, generator
 from dossier.config import (
     DATABASE_URL_ENV,
     ConfigError,
     get_analysis_dir,
     get_applications_dir,
     get_default_language,
+    get_generated_dir,
     get_inventory_path,
 )
 from dossier.db import get_engine, session_scope
@@ -140,6 +141,37 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="no_llm_gaps",
         help="Deterministic matching only (no second API call)",
+    )
+
+    # generate
+    generate = commands.add_parser("generate", help="Generate tailored documents")
+    generate_commands = generate.add_subparsers(dest="generate_command", required=True)
+
+    cv = generate_commands.add_parser("cv", help="Generate a tailored CV draft")
+    cv.add_argument("--jd", required=True, help="JD file path, or '-' for stdin")
+    cv.add_argument(
+        "--inventory",
+        type=Path,
+        default=None,
+        help="Inventory directory (defaults to $DOSSIER_DATA_PATH/inventory)",
+    )
+    cv.add_argument("--language", default=None, help="CV language (ISO 639-1)")
+    cv.add_argument(
+        "--provider",
+        choices=["anthropic", "openai"],
+        default=None,
+        help="LLM provider (defaults to $DOSSIER_LLM_PROVIDER, else anthropic)",
+    )
+    cv.add_argument(
+        "--no-llm-gaps",
+        action="store_true",
+        dest="no_llm_gaps",
+        help="Deterministic matching only for the underlying JD analysis",
+    )
+    cv.add_argument(
+        "--save",
+        action="store_true",
+        help="Save the draft markdown under DOSSIER_DATA_PATH/generated",
     )
 
     return parser
@@ -409,6 +441,58 @@ def _analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── Generate ─────────────────────────────────────────────────────────────────
+def _generate_cv(args: argparse.Namespace) -> int:
+    if args.jd == "-":
+        jd_text = sys.stdin.read()
+    else:
+        jd_path = Path(args.jd)
+        if not jd_path.is_file():
+            print(f"JD file not found: {jd_path}", file=sys.stderr)
+            return 1
+        jd_text = jd_path.read_text(encoding="utf-8")
+
+    inventory_dir = args.inventory if args.inventory is not None else get_inventory_path()
+    try:
+        inventory = load_inventory(inventory_dir)
+    except InventoryError as exc:
+        print(f"Inventory is invalid:\n{exc}", file=sys.stderr)
+        return 1
+
+    language = args.language or get_default_language()
+    client = engine.build_default_client(provider=args.provider)
+    draft = generator.generate_cv_from_jd(
+        jd_text,
+        inventory,
+        client,
+        language=language,
+        use_llm_gaps=not args.no_llm_gaps,
+    )
+    markdown = generator.render_cv_markdown(draft)
+    print(markdown)
+
+    if args.save:
+        stem = _slug(draft.profile.full_name)
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%S")
+        out_dir = get_generated_dir()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / f"{stem}-{timestamp}.md"
+        out_path.write_text(markdown, encoding="utf-8")
+        print(
+            f"✓ Saved CV draft to {out_path} — "
+            "run 'dossier track attach' to record it against an application."
+        )
+
+    return 0
+
+
+def _dispatch_generate(args: argparse.Namespace) -> int:
+    match args.generate_command:
+        case "cv":
+            return _generate_cv(args)
+    return 2  # pragma: no cover
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────
 def run(argv: list[str] | None = None) -> int:
     """Parse ``argv`` and dispatch. Returns a process exit code."""
@@ -422,6 +506,8 @@ def run(argv: list[str] | None = None) -> int:
             return _dispatch_track(args)
         if args.command == "analyze":
             return _analyze(args)
+        if args.command == "generate":
+            return _dispatch_generate(args)
     except ConfigError as exc:
         print(f"Configuration error: {exc}", file=sys.stderr)
         return 1

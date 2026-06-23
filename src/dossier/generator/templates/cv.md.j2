@@ -1,0 +1,42 @@
+# {{ profile.full_name }}
+
+{{ profile.headline }}
+{% if profile.location %}
+{{ profile.location }}
+{% endif %}
+{{ profile.email }}{% if profile.phone %} · {{ profile.phone }}{% endif %}
+
+{% for link in profile.links %}
+[{{ link.label }}]({{ link.url }})
+{% endfor %}
+
+## Summary
+
+{{ summary }}
+
+## Experience
+{% for role in roles %}
+
+### {{ role.title }} — {{ role.company }}
+
+{{ role.start }} – {{ role.end or "present" }}{% if role.location %} · {{ role.location }}{% endif %}
+
+{% for achievement in role.achievements %}
+- {{ achievement }}
+{% endfor %}
+{% endfor %}
+
+## Skills
+{% for group in skills %}
+
+**{{ group.category | capitalize }}:** {{ group.names | join(", ") }}
+{% endfor %}
+
+## Education
+{% for entry in education %}
+
+**{{ entry.degree }}**{% if entry.field %} in {{ entry.field }}{% endif %} — {{ entry.institution }}
+{% if entry.start or entry.end %}
+{{ entry.start or "" }} – {{ entry.end or "" }}
+{% endif %}
+{% endfor %}

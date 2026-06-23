@@ -18,10 +18,15 @@ applications/
     ├── cv-<timestamp>.md
     ├── cover_letter-<timestamp>.md
     └── job_description-<timestamp>.md
+
+generated/
+└── <slug>-<timestamp>.md           # mutable CV drafts from `dossier generate cv --save`
 ```
 
-`generated/` remains the engine's future draft area; `applications/<id>/` holds the frozen copy
-of what was actually sent (taken at attach time, never mutated).
+`generated/` holds mutable CV (and, from M4, cover letter) drafts written by `dossier generate`;
+`applications/<id>/` holds the frozen copy of what was actually sent (taken at attach time, never
+mutated). `<slug>` is derived from the candidate's name. Review a draft, then run
+`dossier track attach` to copy and hash the chosen version into the frozen record (ADR-008).
 
 ## Tables
 

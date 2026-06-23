@@ -13,6 +13,10 @@ def _dummy_credentials(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    # Config functions call load_dotenv() by default, which would re-populate any
+    # env var this test deletes from a real local .env. Tests must control the
+    # environment fully, independent of what happens to be on the developer's disk.
+    monkeypatch.setattr("dossier.config.load_dotenv", lambda *a, **k: None)
 
 
 def test_defaults_to_anthropic(monkeypatch: pytest.MonkeyPatch) -> None:
