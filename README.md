@@ -73,7 +73,7 @@ Choices are recorded as ADRs as they are made.
 - [x] **M2** — JD parser and gap analysis
 - [x] **M3** — CV generator
 - [x] **M4** — Cover letter generator
-- [~] **M5** — Application tracker with reminders — *foundation built early: schema, status history, document versioning, and follow-ups*
+- [x] **M5** — Application tracker with reminders — *schema, status history, document versioning, follow-ups, and manual reminder control + a due-follow-up digest*
 - [ ] **M6** — Containerization (Docker, docker-compose)
 - [ ] **M7** — CI/CD pipeline (GitHub Actions)
 - [ ] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana)

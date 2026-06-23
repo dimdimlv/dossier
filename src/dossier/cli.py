@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -30,6 +31,7 @@ from dossier.config import (
 from dossier.db import get_engine, session_scope
 from dossier.inventory.loader import InventoryError, load_inventory
 from dossier.tracker import (
+    Application,
     ApplicationStatus,
     DocumentKind,
     TrackerError,
@@ -38,6 +40,7 @@ from dossier.tracker import (
     due_followups,
     get_application,
     list_applications,
+    set_follow_up,
     set_status,
 )
 
@@ -107,10 +110,31 @@ def _build_parser() -> argparse.ArgumentParser:
     show = track_commands.add_parser("show", help="Show an application in detail")
     show.add_argument("id", type=int)
 
+    remind = track_commands.add_parser(
+        "remind", help="Set, reschedule, or clear an application's follow-up"
+    )
+    remind.add_argument("id", type=int)
+    when = remind.add_mutually_exclusive_group(required=True)
+    when.add_argument(
+        "--on", type=date.fromisoformat, default=None, help="Follow-up date (ISO 8601)"
+    )
+    when.add_argument(
+        "--in", dest="in_", default=None, help="Relative date, e.g. '7', '7d', or '2w'"
+    )
+    when.add_argument(
+        "--clear", action="store_true", help="Dismiss the follow-up (no date)"
+    )
+
     followups = track_commands.add_parser(
-        "followups", help="List applications with a due follow-up"
+        "followups", help="Show a digest of applications with a due follow-up"
     )
     followups.add_argument("--as-of", type=date.fromisoformat, default=None)
+    followups.add_argument(
+        "--exit-code",
+        action="store_true",
+        dest="exit_code",
+        help="Exit 1 when follow-ups are due (for schedulers); else exit 0",
+    )
 
     # analyze
     analyze = commands.add_parser(
@@ -248,6 +272,20 @@ def _session() -> Iterator[Session]:
         yield session
 
 
+_DURATION_RE = re.compile(r"^(\d+)([dw]?)$")
+
+
+def _parse_duration_days(spec: str) -> int:
+    """Parse a duration like ``"7"``/``"7d"`` (days) or ``"2w"`` (weeks) into days."""
+    match = _DURATION_RE.match(spec.strip())
+    if match is None:
+        raise ValueError(
+            f"Invalid duration: {spec!r}; use e.g. '7', '7d', or '2w'."
+        )
+    value = int(match.group(1))
+    return value * 7 if match.group(2) == "w" else value
+
+
 def _db_upgrade() -> int:
     from alembic import command
 
@@ -365,19 +403,65 @@ def _track_show(application_id: int) -> int:
     return 0
 
 
-def _track_followups(as_of: date | None) -> int:
+def _track_remind(args: argparse.Namespace) -> int:
+    if args.clear:
+        on: date | None = None
+    elif args.on is not None:
+        on = args.on
+    else:
+        try:
+            on = date.today() + timedelta(days=_parse_duration_days(args.in_))
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 1
+
+    with _session() as session:
+        application = set_follow_up(session, args.id, on=on)
+        if application.follow_up_on is None:
+            print(f"✓ Application #{application.id} follow-up cleared")
+        else:
+            print(
+                f"✓ Application #{application.id} follow-up set to "
+                f"{application.follow_up_on.isoformat()}"
+            )
+    return 0
+
+
+def _track_followups(args: argparse.Namespace) -> int:
+    as_of = args.as_of or date.today()
     with _session() as session:
         applications = due_followups(session, as_of=as_of)
         if not applications:
             print("No follow-ups due.")
             return 0
-        print(f"{len(applications)} follow-up(s) due:")
-        for app in applications:
+
+        overdue = [a for a in applications if a.follow_up_on and a.follow_up_on < as_of]
+        due_today = [a for a in applications if a.follow_up_on == as_of]
+        print(
+            f"{len(applications)} follow-up(s) due "
+            f"({len(overdue)} overdue) as of {as_of.isoformat()}:"
+        )
+
+        def _line(app: Application, suffix: str = "") -> str:
             due = app.follow_up_on.isoformat() if app.follow_up_on else "—"
-            print(
+            return (
                 f"#{app.id:<3} due {due}  {app.company} — {app.role} "
-                f"[{app.status.value}]"
+                f"[{app.status.value}]{suffix}"
             )
+
+        if overdue:
+            print("\nOverdue:")
+            for app in overdue:
+                assert app.follow_up_on is not None
+                days = (as_of - app.follow_up_on).days
+                print(_line(app, f"  ({days}d overdue)"))
+        if due_today:
+            print("\nDue today:")
+            for app in due_today:
+                print(_line(app))
+
+    if args.exit_code:
+        return 1
     return 0
 
 
@@ -393,8 +477,10 @@ def _dispatch_track(args: argparse.Namespace) -> int:
             return _track_list(args)
         case "show":
             return _track_show(args.id)
+        case "remind":
+            return _track_remind(args)
         case "followups":
-            return _track_followups(args.as_of)
+            return _track_followups(args)
     return 2  # pragma: no cover
 
 

@@ -54,6 +54,15 @@ freely (any → any); the terminal statuses (`accepted`, `rejected`, `withdrawn`
 the follow-up date. A follow-up is set to `applied_on + DOSSIER_FOLLOWUP_DAYS` (default 10) on
 non-terminal statuses.
 
+## Reminders
+
+The follow-up date is the reminder mechanism. Beyond the auto-derived date, it can be controlled
+manually with `dossier track remind <id>` — `--on <date>` to reschedule, `--in <7d|2w>` to snooze
+relative to today, or `--clear` to dismiss it without changing status. `dossier track followups`
+prints a digest of due follow-ups, splitting **overdue** (with days overdue) from **due today**;
+pass `--exit-code` to make it exit `1` when any are due (and `0` otherwise) so it can drive a
+scheduler (cron, a Claude Code routine, etc.).
+
 ## CLI
 
 ```bash
@@ -70,10 +79,13 @@ uv run dossier track attach 1 --kind cv --file path/to/cv.md [--model --language
 # Move it through the pipeline (records an event):
 uv run dossier track status 1 interview --note "phone screen passed"
 
+# Set, reschedule, or clear a follow-up reminder:
+uv run dossier track remind 1 --in 7d          # or --on 2026-07-01, or --clear
+
 # Inspect:
 uv run dossier track list [--status interview]
 uv run dossier track show 1            # details + timeline + documents
-uv run dossier track followups [--as-of 2026-07-01]
+uv run dossier track followups [--as-of 2026-07-01] [--exit-code]
 ```
 
 ## Migrations

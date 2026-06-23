@@ -17,6 +17,7 @@ from dossier.tracker import (
     attach_document,
     due_followups,
     list_applications,
+    set_follow_up,
     set_status,
 )
 
@@ -100,6 +101,30 @@ def test_attach_document_missing_file_raises(
 def test_get_unknown_application_raises(session: Session) -> None:
     with pytest.raises(TrackerError, match="No application"):
         set_status(session, 999, ApplicationStatus.OFFER)
+
+
+def test_set_follow_up_reschedules_and_clears(session: Session) -> None:
+    app = add_application(session, company="Acme", role="Engineer")
+
+    set_follow_up(session, app.id, on=date(2026, 7, 1))
+    assert app.follow_up_on == date(2026, 7, 1)
+
+    set_follow_up(session, app.id, on=None)
+    assert app.follow_up_on is None
+
+
+def test_set_follow_up_allowed_on_terminal_status(session: Session) -> None:
+    app = add_application(session, company="Acme", role="Engineer")
+    set_status(session, app.id, ApplicationStatus.ACCEPTED)
+    assert app.follow_up_on is None  # terminal cleared it
+
+    set_follow_up(session, app.id, on=date(2026, 8, 1))
+    assert app.follow_up_on == date(2026, 8, 1)
+
+
+def test_set_follow_up_unknown_application_raises(session: Session) -> None:
+    with pytest.raises(TrackerError, match="No application"):
+        set_follow_up(session, 999, on=date(2026, 7, 1))
 
 
 def test_list_and_due_followups_filter(session: Session) -> None:

@@ -18,6 +18,7 @@ from dossier.tracker.repository import (
     due_followups,
     get_application,
     list_applications,
+    set_follow_up,
     set_status,
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     "due_followups",
     "get_application",
     "list_applications",
+    "set_follow_up",
     "set_status",
 ]

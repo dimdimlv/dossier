@@ -109,6 +109,21 @@ def set_status(
     return application
 
 
+def set_follow_up(
+    session: Session, application_id: int, *, on: date | None
+) -> Application:
+    """Manually set or clear an application's follow-up date.
+
+    Unlike the auto-derived follow-up (see :func:`_compute_follow_up`), this is an
+    explicit user action and is allowed regardless of status — e.g. a reminder to
+    send a thank-you after ``accepted``. ``on=None`` dismisses the follow-up.
+    """
+    application = get_application(session, application_id)
+    application.follow_up_on = on
+    session.flush()
+    return application
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     digest.update(path.read_bytes())
