@@ -1,0 +1,24 @@
+# {{ profile.full_name }}
+
+{% if profile.location %}
+{{ profile.location }}
+{% endif %}
+{{ profile.email }}{% if profile.phone %} · {{ profile.phone }}{% endif %}
+
+{% for link in profile.links %}
+[{{ link.label }}]({{ link.url }})
+{% endfor %}
+
+{% if date %}
+{{ date }}
+{% endif %}
+
+{{ salutation }}
+
+{% for paragraph in body_paragraphs %}
+{{ paragraph }}
+
+{% endfor %}
+{{ signoff }}
+
+{{ profile.full_name }}

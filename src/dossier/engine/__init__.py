@@ -12,6 +12,7 @@ from dossier.engine.client import (
 )
 from dossier.engine.models import (
     Analysis,
+    CoverLetter,
     CVTailoring,
     GapReport,
     JobRequirements,
@@ -25,6 +26,7 @@ from dossier.engine.models import (
 __all__ = [
     "Analysis",
     "AnthropicClient",
+    "CoverLetter",
     "CVTailoring",
     "EngineError",
     "GapReport",

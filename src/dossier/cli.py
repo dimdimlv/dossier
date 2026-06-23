@@ -174,6 +174,50 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Save the draft markdown under DOSSIER_DATA_PATH/generated",
     )
 
+    cover_letter = generate_commands.add_parser(
+        "cover-letter", help="Generate a tailored cover letter draft"
+    )
+    cover_letter.add_argument(
+        "--jd", required=True, help="JD file path, or '-' for stdin"
+    )
+    cover_letter.add_argument(
+        "--inventory",
+        type=Path,
+        default=None,
+        help="Inventory directory (defaults to $DOSSIER_DATA_PATH/inventory)",
+    )
+    cover_letter.add_argument(
+        "--language", default=None, help="Cover letter language (ISO 639-1)"
+    )
+    cover_letter.add_argument(
+        "--provider",
+        choices=["anthropic", "openai"],
+        default=None,
+        help="LLM provider (defaults to $DOSSIER_LLM_PROVIDER, else anthropic)",
+    )
+    cover_letter.add_argument(
+        "--to",
+        dest="recipient",
+        default=None,
+        help="Addressee for the salutation (default: 'Dear Hiring Manager')",
+    )
+    cover_letter.add_argument(
+        "--notes",
+        default=None,
+        help="Optional candidate motivation to weave in (free text)",
+    )
+    cover_letter.add_argument(
+        "--no-llm-gaps",
+        action="store_true",
+        dest="no_llm_gaps",
+        help="Deterministic matching only for the underlying JD analysis",
+    )
+    cover_letter.add_argument(
+        "--save",
+        action="store_true",
+        help="Save the draft markdown under DOSSIER_DATA_PATH/generated",
+    )
+
     return parser
 
 
@@ -486,10 +530,59 @@ def _generate_cv(args: argparse.Namespace) -> int:
     return 0
 
 
+def _generate_cover_letter(args: argparse.Namespace) -> int:
+    if args.jd == "-":
+        jd_text = sys.stdin.read()
+    else:
+        jd_path = Path(args.jd)
+        if not jd_path.is_file():
+            print(f"JD file not found: {jd_path}", file=sys.stderr)
+            return 1
+        jd_text = jd_path.read_text(encoding="utf-8")
+
+    inventory_dir = args.inventory if args.inventory is not None else get_inventory_path()
+    try:
+        inventory = load_inventory(inventory_dir)
+    except InventoryError as exc:
+        print(f"Inventory is invalid:\n{exc}", file=sys.stderr)
+        return 1
+
+    language = args.language or get_default_language()
+    client = engine.build_default_client(provider=args.provider)
+    draft = generator.generate_cover_letter_from_jd(
+        jd_text,
+        inventory,
+        client,
+        language=language,
+        use_llm_gaps=not args.no_llm_gaps,
+        recipient=args.recipient,
+        notes=args.notes,
+    )
+    markdown = generator.render_cover_letter_markdown(draft)
+    print(markdown)
+
+    if args.save:
+        stem = _slug(draft.profile.full_name)
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H%M%S")
+        out_dir = get_generated_dir()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_path = out_dir / f"{stem}-cover-letter-{timestamp}.md"
+        out_path.write_text(markdown, encoding="utf-8")
+        print(
+            f"✓ Saved cover letter draft to {out_path} — run "
+            "'dossier track attach --kind cover_letter' to record it against an "
+            "application."
+        )
+
+    return 0
+
+
 def _dispatch_generate(args: argparse.Namespace) -> int:
     match args.generate_command:
         case "cv":
             return _generate_cv(args)
+        case "cover-letter":
+            return _generate_cover_letter(args)
     return 2  # pragma: no cover
 
 

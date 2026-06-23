@@ -94,3 +94,15 @@ class CVTailoring(_Strict):
 
     summary: str
     achievements: list[TailoredAchievement] = Field(default_factory=list)
+
+
+class CoverLetter(_Strict):
+    """Structured output for a cover letter. Unlike :class:`CVTailoring`, this is
+    composed prose, not a 1:1 rephrasing — so there is no ``id`` round-trip to
+    structurally prevent fabrication; that is enforced by the prompt and by
+    feeding the model only real achievements as source material (see ADR-009).
+    Candidate name/contact are rendered from the profile, not produced here."""
+
+    salutation: str
+    body_paragraphs: list[str] = Field(default_factory=list)
+    signoff: str

@@ -19,6 +19,7 @@ from dossier.config import (
     get_provider,
 )
 from dossier.engine.models import (
+    CoverLetter,
     CVTailoring,
     JobRequirements,
     SelectedAchievement,
@@ -26,6 +27,7 @@ from dossier.engine.models import (
     SkillRequirement,
 )
 from dossier.engine.prompts import (
+    COVER_LETTER_SYSTEM,
     CV_TAILORING_SYSTEM,
     GAP_ASSESSMENT_SYSTEM,
     JD_EXTRACTION_SYSTEM,
@@ -64,6 +66,21 @@ class LLMClient(Protocol):
         language: str,
     ) -> CVTailoring: ...
 
+    def draft_cover_letter(
+        self,
+        *,
+        full_name: str,
+        profile_summary: str | None,
+        achievements: list[SelectedAchievement],
+        role_title: str | None,
+        company: str | None,
+        keywords: list[str],
+        responsibilities: list[str],
+        recipient: str | None,
+        notes: str | None,
+        language: str,
+    ) -> CoverLetter: ...
+
 
 # ── Shared prompt construction ───────────────────────────────────────────────
 def _extraction_user(jd_text: str, language: str) -> str:
@@ -96,6 +113,33 @@ def _tailoring_user(
         f"Target keywords: {', '.join(keywords) or '—'}\n"
         f"Output language: {language}\n\n"
         f"Selected achievements (JSON):\n\n{items}"
+    )
+
+
+def _cover_letter_user(
+    full_name: str,
+    profile_summary: str | None,
+    achievements: list[SelectedAchievement],
+    role_title: str | None,
+    company: str | None,
+    keywords: list[str],
+    responsibilities: list[str],
+    recipient: str | None,
+    notes: str | None,
+    language: str,
+) -> str:
+    items = json.dumps([a.model_dump() for a in achievements], ensure_ascii=False)
+    return (
+        f"Candidate: {full_name}\n"
+        f"Profile summary: {profile_summary or '—'}\n"
+        f"Target role: {role_title or '—'}\n"
+        f"Target company: {company or '—'}\n"
+        f"Recipient: {recipient or '—'}\n"
+        f"Target keywords: {', '.join(keywords) or '—'}\n"
+        f"Key responsibilities: {'; '.join(responsibilities) or '—'}\n"
+        f"Candidate notes: {notes or '—'}\n"
+        f"Output language: {language}\n\n"
+        f"Achievements to draw on (JSON):\n\n{items}"
     )
 
 
@@ -143,6 +187,39 @@ class _ParsingClient:
             CVTailoring,
         )
         assert isinstance(result, CVTailoring)
+        return result
+
+    def draft_cover_letter(
+        self,
+        *,
+        full_name: str,
+        profile_summary: str | None,
+        achievements: list[SelectedAchievement],
+        role_title: str | None,
+        company: str | None,
+        keywords: list[str],
+        responsibilities: list[str],
+        recipient: str | None,
+        notes: str | None,
+        language: str,
+    ) -> CoverLetter:
+        result = self._parse(
+            COVER_LETTER_SYSTEM,
+            _cover_letter_user(
+                full_name,
+                profile_summary,
+                achievements,
+                role_title,
+                company,
+                keywords,
+                responsibilities,
+                recipient,
+                notes,
+                language,
+            ),
+            CoverLetter,
+        )
+        assert isinstance(result, CoverLetter)
         return result
 
 

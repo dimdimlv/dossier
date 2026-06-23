@@ -3,6 +3,7 @@ those live in :mod:`dossier.engine.models`; see ADR-008)."""
 
 from __future__ import annotations
 
+from datetime import date as date_
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -37,6 +38,24 @@ class CVDraft(_Strict):
     roles: list[CVRoleSection] = Field(default_factory=list)
     skills: list[CVSkillGroup] = Field(default_factory=list)
     education: list[Education] = Field(default_factory=list)
+    language: str
+    model: str | None = None
+    generated_at: datetime | None = None
+
+
+class CoverLetterDraft(_Strict):
+    """The content of one generated cover letter, decoupled from the LLM that
+    composed its prose and from the Markdown template that renders it. The
+    candidate's name/contact come from ``profile``, not from the LLM (ADR-009)."""
+
+    profile: Profile
+    salutation: str
+    body_paragraphs: list[str] = Field(default_factory=list)
+    signoff: str
+    recipient: str | None = None
+    company: str | None = None
+    role_title: str | None = None
+    date: date_ | None = None
     language: str
     model: str | None = None
     generated_at: datetime | None = None

@@ -72,7 +72,7 @@ Choices are recorded as ADRs as they are made.
 - [x] **M1** — Inventory schema (real entries pending)
 - [x] **M2** — JD parser and gap analysis
 - [x] **M3** — CV generator
-- [ ] **M4** — Cover letter generator
+- [x] **M4** — Cover letter generator
 - [~] **M5** — Application tracker with reminders — *foundation built early: schema, status history, document versioning, and follow-ups*
 - [ ] **M6** — Containerization (Docker, docker-compose)
 - [ ] **M7** — CI/CD pipeline (GitHub Actions)

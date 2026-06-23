@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dossier.engine.models import (
+    CoverLetter,
     CVTailoring,
     JobRequirements,
     RequirementCoverage,
@@ -21,11 +22,15 @@ class FakeLLMClient:
         requirements: JobRequirements,
         assessment: SemanticAssessment | None = None,
         tailoring: CVTailoring | None = None,
+        cover_letter: CoverLetter | None = None,
     ) -> None:
         self._requirements = requirements
         self._assessment = assessment or SemanticAssessment()
         self._tailoring = tailoring
+        self._cover_letter = cover_letter
         self.assess_called = False
+        self.cover_letter_recipient: str | None = None
+        self.cover_letter_notes: str | None = None
 
     def extract_requirements(self, jd_text: str, language: str) -> JobRequirements:
         return self._requirements
@@ -49,6 +54,32 @@ class FakeLLMClient:
         if self._tailoring is not None:
             return self._tailoring
         return tailoring_for(*[a.id for a in achievements])
+
+    def draft_cover_letter(
+        self,
+        *,
+        full_name: str,
+        profile_summary: str | None,
+        achievements: list[SelectedAchievement],
+        role_title: str | None,
+        company: str | None,
+        keywords: list[str],
+        responsibilities: list[str],
+        recipient: str | None,
+        notes: str | None,
+        language: str,
+    ) -> CoverLetter:
+        self.cover_letter_recipient = recipient
+        self.cover_letter_notes = notes
+        if self._cover_letter is not None:
+            return self._cover_letter
+        salutation = f"Dear {recipient}," if recipient else "Dear Hiring Manager,"
+        return cover_letter_for(
+            "Opening paragraph.",
+            "Body paragraph.",
+            "Closing paragraph.",
+            salutation=salutation,
+        )
 
 
 def requirements_with(*skills: str) -> JobRequirements:
@@ -80,4 +111,16 @@ def tailoring_for(
             TailoredAchievement(id=aid, statement=overrides.get(aid, f"Tailored: {aid}"))
             for aid in achievement_ids
         ],
+    )
+
+
+def cover_letter_for(
+    *paragraphs: str,
+    salutation: str = "Dear Hiring Manager,",
+    signoff: str = "Sincerely,",
+) -> CoverLetter:
+    return CoverLetter(
+        salutation=salutation,
+        body_paragraphs=list(paragraphs),
+        signoff=signoff,
     )

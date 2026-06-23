@@ -5,10 +5,20 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from engine_fakes import FakeLLMClient, requirements_with, tailoring_for
+from engine_fakes import (
+    FakeLLMClient,
+    cover_letter_for,
+    requirements_with,
+    tailoring_for,
+)
 
 from dossier import engine
-from dossier.generator.generator import generate_cv, generate_cv_from_jd
+from dossier.generator.generator import (
+    generate_cover_letter,
+    generate_cover_letter_from_jd,
+    generate_cv,
+    generate_cv_from_jd,
+)
 from dossier.generator.selector import select_experiences
 from dossier.inventory import load_inventory
 
@@ -52,3 +62,45 @@ def test_generate_cv_from_jd_runs_analysis_first() -> None:
     assert draft.profile.full_name == "Jane Doe"
     assert draft.roles
     assert draft.skills
+
+
+def test_generate_cover_letter_uses_composed_prose() -> None:
+    client = FakeLLMClient(requirements_with("Python"))
+    analysis = _analysis(client)
+    client._cover_letter = cover_letter_for(
+        "Composed opening.", "Composed body.", salutation="Dear Jane Smith,"
+    )
+
+    draft = generate_cover_letter(INVENTORY, analysis, client, language="en")
+
+    assert draft.salutation == "Dear Jane Smith,"
+    assert draft.body_paragraphs == ["Composed opening.", "Composed body."]
+    assert draft.profile.full_name == "Jane Doe"
+    assert draft.company == "Acme Corp"
+
+
+def test_generate_cover_letter_passes_recipient_and_notes_to_client() -> None:
+    client = FakeLLMClient(requirements_with("Python"))
+    analysis = _analysis(client)
+
+    generate_cover_letter(
+        INVENTORY,
+        analysis,
+        client,
+        language="en",
+        recipient="Jane Smith",
+        notes="Excited about your payments platform",
+    )
+
+    assert client.cover_letter_recipient == "Jane Smith"
+    assert client.cover_letter_notes == "Excited about your payments platform"
+
+
+def test_generate_cover_letter_from_jd_runs_analysis_first() -> None:
+    client = FakeLLMClient(requirements_with("Python"))
+    draft = generate_cover_letter_from_jd(
+        "jd text", INVENTORY, client, language="en", use_llm_gaps=False
+    )
+    assert draft.profile.full_name == "Jane Doe"
+    assert draft.body_paragraphs
+    assert draft.date is not None

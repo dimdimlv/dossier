@@ -9,6 +9,7 @@ import pytest
 
 from dossier.engine import EngineError, OpenAIClient
 from dossier.engine.models import (
+    CoverLetter,
     CVTailoring,
     JobRequirements,
     SelectedAchievement,
@@ -117,3 +118,30 @@ def test_tailor_cv_returns_parsed() -> None:
     )
     assert isinstance(result, CVTailoring)
     assert result.achievements[0].id == "0-0"
+
+
+def test_draft_cover_letter_returns_parsed() -> None:
+    fake = FakeOpenAI(
+        CoverLetter(
+            salutation="Dear Jane Smith,",
+            body_paragraphs=["Opening.", "Body.", "Closing."],
+            signoff="Sincerely,",
+        )
+    )
+    achievement = SelectedAchievement(
+        id="0-0", company="Acme", title="Engineer", original_statement="Did a thing."
+    )
+    result = _client(fake).draft_cover_letter(
+        full_name="Jane Doe",
+        profile_summary="Backend engineer.",
+        achievements=[achievement],
+        role_title="Senior Backend Engineer",
+        company="Acme Corp",
+        keywords=["Python"],
+        responsibilities=["Operate payment services"],
+        recipient="Jane Smith",
+        notes="Excited about your payments platform",
+        language="en",
+    )
+    assert isinstance(result, CoverLetter)
+    assert result.salutation == "Dear Jane Smith,"

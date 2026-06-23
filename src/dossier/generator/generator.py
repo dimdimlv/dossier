@@ -7,10 +7,21 @@ used only to tailor phrasing of what was already selected.
 
 from __future__ import annotations
 
+from datetime import date
+
 from dossier.engine import Analysis, EngineError, LLMClient, analyze_jd
-from dossier.generator.models import CVDraft, CVRoleSection, CVSkillGroup
+from dossier.generator.models import (
+    CoverLetterDraft,
+    CVDraft,
+    CVRoleSection,
+    CVSkillGroup,
+)
 from dossier.generator.selector import select_experiences, select_skills
 from dossier.inventory import Inventory
+
+# A cover letter cites a few highlights, not the whole CV.
+_COVER_LETTER_MAX_ROLES = 3
+_COVER_LETTER_MAX_ACHIEVEMENTS_PER_ROLE = 2
 
 
 def generate_cv(
@@ -91,3 +102,69 @@ def generate_cv_from_jd(
         jd_text, inventory, client, language=language, use_llm_gaps=use_llm_gaps
     )
     return generate_cv(inventory, analysis, client, language=language)
+
+
+def generate_cover_letter(
+    inventory: Inventory,
+    analysis: Analysis,
+    client: LLMClient,
+    *,
+    language: str = "en",
+    recipient: str | None = None,
+    notes: str | None = None,
+) -> CoverLetterDraft:
+    """Select a few relevant highlights from ``inventory`` and have the LLM compose
+    a cover letter from them. Unlike the CV, the letter is composed prose, so there
+    is no id round-trip — anti-fabrication is prompt-enforced and source-limited
+    (ADR-009)."""
+    selected = select_experiences(
+        inventory,
+        analysis,
+        max_roles=_COVER_LETTER_MAX_ROLES,
+        max_achievements_per_role=_COVER_LETTER_MAX_ACHIEVEMENTS_PER_ROLE,
+    )
+    requirements = analysis.requirements
+
+    letter = client.draft_cover_letter(
+        full_name=inventory.profile.full_name,
+        profile_summary=inventory.profile.summary,
+        achievements=selected,
+        role_title=requirements.role_title,
+        company=requirements.company,
+        keywords=requirements.keywords,
+        responsibilities=requirements.responsibilities,
+        recipient=recipient,
+        notes=notes,
+        language=language,
+    )
+
+    return CoverLetterDraft(
+        profile=inventory.profile,
+        salutation=letter.salutation,
+        body_paragraphs=letter.body_paragraphs,
+        signoff=letter.signoff,
+        recipient=recipient,
+        company=requirements.company,
+        role_title=requirements.role_title,
+        date=date.today(),
+        language=language,
+    )
+
+
+def generate_cover_letter_from_jd(
+    jd_text: str,
+    inventory: Inventory,
+    client: LLMClient,
+    *,
+    language: str = "en",
+    use_llm_gaps: bool = True,
+    recipient: str | None = None,
+    notes: str | None = None,
+) -> CoverLetterDraft:
+    """Analyse ``jd_text`` against ``inventory``, then generate a cover letter."""
+    analysis = analyze_jd(
+        jd_text, inventory, client, language=language, use_llm_gaps=use_llm_gaps
+    )
+    return generate_cover_letter(
+        inventory, analysis, client, language=language, recipient=recipient, notes=notes
+    )

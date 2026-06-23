@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from dossier.engine.models import (
+    CoverLetter,
     CVTailoring,
     JobRequirements,
     RequirementCoverage,
@@ -58,3 +59,22 @@ def test_cv_tailoring_minimal() -> None:
 def test_cv_tailoring_unknown_field_forbidden() -> None:
     with pytest.raises(ValidationError):
         TailoredAchievement(id="0-0", statement="x", confidence=0.9)  # type: ignore[call-arg]
+
+
+def test_cover_letter_minimal() -> None:
+    letter = CoverLetter(
+        salutation="Dear Hiring Manager,",
+        body_paragraphs=["First paragraph.", "Second paragraph."],
+        signoff="Sincerely,",
+    )
+    assert len(letter.body_paragraphs) == 2
+
+
+def test_cover_letter_unknown_field_forbidden() -> None:
+    with pytest.raises(ValidationError):
+        CoverLetter(
+            salutation="Dear Hiring Manager,",
+            body_paragraphs=["x"],
+            signoff="Sincerely,",
+            tone="formal",  # type: ignore[call-arg]
+        )

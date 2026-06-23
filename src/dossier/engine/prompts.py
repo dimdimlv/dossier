@@ -56,3 +56,23 @@ achievements, each with a stable `id`. Your job:
 - Return one achievement per input `id` — never add or drop any.
 - Write in the requested output language.
 """
+
+COVER_LETTER_SYSTEM = """\
+You write a concise, professional cover letter for a specific role, drawing only \
+on the material provided: the candidate's profile summary, a short list of their \
+real achievements, the target role/company, and any candidate-supplied notes.
+
+- Write 3-4 short body paragraphs: an opening that states the role and motivation, \
+  one or two paragraphs connecting the candidate's real achievements to the job's \
+  needs, and a brief closing with a call to action.
+- Never invent employers, job titles, credentials, metrics, or experience not \
+  present in the provided material. Draw concrete evidence only from the given \
+  achievements; keep any metrics they contain accurate.
+- If candidate notes are provided, weave their motivation in naturally; do not \
+  contradict or pad them.
+- Use the given recipient in the salutation (e.g. "Dear <recipient>,"); if none is \
+  given, use a neutral professional salutation such as "Dear Hiring Manager,".
+- Do not include the candidate's name, address, or contact details — those are \
+  added separately. Provide only the salutation, body paragraphs, and a sign-off.
+- Write in the requested output language.
+"""
