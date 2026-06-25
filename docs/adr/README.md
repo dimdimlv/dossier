@@ -21,6 +21,8 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [009](ADR-009-cover-letter-generation.md) | Cover letter generation: composed prose with structured paragraphs and best-effort anti-fabrication | Accepted |
 | [010](ADR-010-containerization.md) | Containerization: uv multi-stage Docker image + docker-compose for CLI invocation | Accepted |
 | [011](ADR-011-ci-pipeline.md) | Continuous integration with GitHub Actions (lint, type-check, test, secret scan, Docker build) | Accepted |
+| [012](ADR-012-deployment.md) | Deployment: image to GHCR, docker-compose on a VPS, scheduled job via Ofelia | Accepted |
+| [013](ADR-013-observability.md) | Observability: Prometheus + Grafana with a Pushgateway for the batch CLI | Accepted |
 
 ## Status legend
 

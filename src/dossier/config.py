@@ -21,6 +21,7 @@ LANGUAGE_ENV = "DOSSIER_DEFAULT_LANGUAGE"
 PROVIDER_ENV = "DOSSIER_LLM_PROVIDER"
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"  # pragma: allowlist secret
 OPENAI_MODEL_ENV = "OPENAI_MODEL"
+PUSHGATEWAY_URL_ENV = "DOSSIER_PUSHGATEWAY_URL"
 
 DEFAULT_FOLLOWUP_DAYS = 10
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -161,6 +162,17 @@ def get_openai_model(load_env: bool = True) -> str:
             "supports structured outputs (e.g. a current gpt-4o/gpt-4.1-class model)."
         )
     return model
+
+
+def get_pushgateway_url(load_env: bool = True) -> str | None:
+    """Return the Prometheus Pushgateway URL, or ``None`` if unset.
+
+    Only used when ``dossier track followups --push-metrics`` is requested; the
+    scheduled reminder job (M8) sets it to the in-cluster gateway address.
+    """
+    if load_env:
+        load_dotenv()
+    return os.environ.get(PUSHGATEWAY_URL_ENV) or None
 
 
 def get_followup_days(load_env: bool = True) -> int:

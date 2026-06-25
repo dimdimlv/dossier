@@ -1,0 +1,87 @@
+# Dossier — production/VPS stack: scheduled reminder job + monitoring (ADR-012, ADR-013).
+#
+# Brings up the follow-up scheduler (Ofelia cron sidecar that runs the published
+# dossier image) alongside a Prometheus + Grafana monitoring stack with a
+# Pushgateway (for the batch job's metrics) and host/container exporters.
+#
+#   cp deploy/.env.example deploy/.env   # then edit
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# See docs/deployment.md (runbook) and docs/monitoring.md.
+
+networks:
+  # Explicit name so the Ofelia INI's `network = dossier` resolves regardless of
+  # the compose project prefix.
+  dossier:
+    name: dossier
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+services:
+  # ── Scheduler: runs `dossier track followups --push-metrics` on a schedule ──
+  scheduler:
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    depends_on: [pushgateway]
+    command: daemon --config=/etc/ofelia.conf
+    networks: [dossier]
+    volumes:
+      - ./ofelia.ini:/etc/ofelia.conf:ro
+      # Ofelia spawns the job container via the Docker API.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # ── Metrics ingestion for the batch job ────────────────────────────────────
+  pushgateway:
+    image: prom/pushgateway:latest
+    restart: unless-stopped
+    networks: [dossier]
+    ports: ["9091:9091"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    depends_on: [pushgateway]
+    networks: [dossier]
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    depends_on: [prometheus]
+    networks: [dossier]
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+  # ── Host & container metrics ────────────────────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    networks: [dossier]
+    pid: host
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro,rslave
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    networks: [dossier]
+    privileged: true
+    devices: ["/dev/kmsg"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro

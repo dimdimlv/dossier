@@ -27,6 +27,7 @@ from dossier.config import (
     get_default_language,
     get_generated_dir,
     get_inventory_path,
+    get_pushgateway_url,
 )
 from dossier.db import get_engine, session_scope
 from dossier.inventory.loader import InventoryError, load_inventory
@@ -134,6 +135,15 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="exit_code",
         help="Exit 1 when follow-ups are due (for schedulers); else exit 0",
+    )
+    followups.add_argument(
+        "--push-metrics",
+        action="store_true",
+        dest="push_metrics",
+        help=(
+            "Push digest counts to the Prometheus Pushgateway at "
+            "$DOSSIER_PUSHGATEWAY_URL (for the scheduled reminder job)"
+        ),
     )
 
     # analyze
@@ -431,12 +441,20 @@ def _track_followups(args: argparse.Namespace) -> int:
     as_of = args.as_of or date.today()
     with _session() as session:
         applications = due_followups(session, as_of=as_of)
+        overdue = [a for a in applications if a.follow_up_on and a.follow_up_on < as_of]
+        due_today = [a for a in applications if a.follow_up_on == as_of]
+
+        if getattr(args, "push_metrics", False):
+            _push_followups_metrics(
+                total=len(applications),
+                overdue=len(overdue),
+                due_today=len(due_today),
+            )
+
         if not applications:
             print("No follow-ups due.")
             return 0
 
-        overdue = [a for a in applications if a.follow_up_on and a.follow_up_on < as_of]
-        due_today = [a for a in applications if a.follow_up_on == as_of]
         print(
             f"{len(applications)} follow-up(s) due "
             f"({len(overdue)} overdue) as of {as_of.isoformat()}:"
@@ -463,6 +481,21 @@ def _track_followups(args: argparse.Namespace) -> int:
     if args.exit_code:
         return 1
     return 0
+
+
+def _push_followups_metrics(*, total: int, overdue: int, due_today: int) -> None:
+    """Push follow-up digest counts to the Pushgateway, if one is configured."""
+    gateway_url = get_pushgateway_url()
+    if not gateway_url:
+        raise ConfigError(
+            "--push-metrics requires DOSSIER_PUSHGATEWAY_URL to be set "
+            "(e.g. http://pushgateway:9091)."
+        )
+    from dossier.metrics import push_followups_metrics
+
+    push_followups_metrics(
+        gateway_url, total=total, overdue=overdue, due_today=due_today
+    )
 
 
 def _dispatch_track(args: argparse.Namespace) -> int:

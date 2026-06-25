@@ -1,0 +1,132 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "schemaVersion": 39,
+  "tags": ["dossier"],
+  "time": { "from": "now-24h", "to": "now" },
+  "timezone": "",
+  "title": "Dossier",
+  "uid": "dossier-overview",
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Overdue follow-ups",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "dossier_followups_overdue",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Due today",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "dossier_followups_due_today",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Total due",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "dossier_followups_due_total",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Time since last successful run",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 90000 },
+              { "color": "red", "value": 172800 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "time() - dossier_followups_last_success_timestamp_seconds",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Follow-ups over time",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "dossier_followups_overdue",
+          "legendFormat": "overdue",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "dossier_followups_due_today",
+          "legendFormat": "due today",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Monitored targets up",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "dossier-prometheus" },
+          "expr": "up",
+          "legendFormat": "{{job}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

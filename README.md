@@ -85,6 +85,15 @@ Compose loads secrets from `.env` and bind-mounts your `dossier-data` directory 
 the container; the host `DOSSIER_DATA_PATH` selects the mount source. Rationale and trade-offs:
 [ADR-010](docs/adr/ADR-010-containerization.md).
 
+## Deployment & monitoring
+
+For unattended use, the published image runs the **follow-up reminder digest** on a schedule (an
+Ofelia cron sidecar) and pushes metrics to a Prometheus + Grafana stack with a Pushgateway — the
+canonical way to observe a batch CLI that runs and exits. The image is published to GHCR by
+`.github/workflows/publish.yml`; the stack and a VPS runbook live under [`deploy/`](deploy/) and
+[`docs/deployment.md`](docs/deployment.md). Metrics catalogue: [`docs/monitoring.md`](docs/monitoring.md).
+Rationale: [ADR-012](docs/adr/ADR-012-deployment.md), [ADR-013](docs/adr/ADR-013-observability.md).
+
 ## Roadmap
 
 - [x] **M0** — Project bootstrapped (README, repo layout, first ADRs)
@@ -95,7 +104,7 @@ the container; the host `DOSSIER_DATA_PATH` selects the mount source. Rationale 
 - [x] **M5** — Application tracker with reminders — *schema, status history, document versioning, follow-ups, and manual reminder control + a due-follow-up digest*
 - [x] **M6** — Containerization (Docker, docker-compose) — *multi-stage `uv` image, non-root, `docker compose run` for CLI invocation*
 - [x] **M7** — CI/CD pipeline (GitHub Actions) — *lint, type-check, tests, secret scan, and Docker build on every push/PR*
-- [ ] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana)
+- [x] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana) — *image published to GHCR, scheduled follow-up digest (Ofelia) pushing metrics to a Prometheus + Grafana stack*
 
 Milestones are sequential by default but the boundary between them is permeable — small pieces of M6+ infrastructure may slip in earlier when they make further development materially easier.
 
