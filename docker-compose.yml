@@ -1,0 +1,23 @@
+# Dossier — docker-compose for on-demand CLI invocation (ADR-010).
+#
+# Dossier is a CLI, not a long-running service. Run commands with:
+#
+#     docker compose run --rm dossier db upgrade
+#     docker compose run --rm dossier inventory validate
+#     docker compose run --rm dossier generate cv <jd-file>
+#
+# Secrets (ANTHROPIC_API_KEY, OPENAI_*, DOSSIER_*) come from .env via env_file.
+# The private dossier-data checkout is bind-mounted to /data; DOSSIER_DATA_PATH
+# is overridden to /data inside the container while its host value (read from
+# .env by compose interpolation) selects the mount source.
+
+services:
+  dossier:
+    build: .
+    image: dossier:latest
+    env_file:
+      - .env
+    environment:
+      DOSSIER_DATA_PATH: /data
+    volumes:
+      - ${DOSSIER_DATA_PATH:?set DOSSIER_DATA_PATH in .env to your dossier-data checkout}:/data

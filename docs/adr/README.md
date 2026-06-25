@@ -19,6 +19,7 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [007](ADR-007-multi-provider-llm.md) | Multi-provider LLM support: pluggable engine clients (Anthropic default, OpenAI optional) | Accepted |
 | [008](ADR-008-cv-generation.md) | CV generation: Jinja2 templating, hybrid deterministic selection + LLM phrasing, draft/frozen separation | Accepted |
 | [009](ADR-009-cover-letter-generation.md) | Cover letter generation: composed prose with structured paragraphs and best-effort anti-fabrication | Accepted |
+| [010](ADR-010-containerization.md) | Containerization: uv multi-stage Docker image + docker-compose for CLI invocation | Accepted |
 
 ## Status legend
 

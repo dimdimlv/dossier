@@ -1,0 +1,52 @@
+# Docker build context excludes (ADR-010).
+#
+# Keep the context lean and never ship secrets or a host-built venv. The build
+# needs: src/, pyproject.toml, uv.lock, alembic.ini, migrations/.
+
+# ── Secrets & personal data (never into an image layer) ──────
+.env
+.env.*
+!.env.example
+data/
+output/
+generated/
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Host virtual environment (rebuilt inside the image) ──────
+.venv/
+venv/
+
+# ── Python / tool caches ─────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# ── Not needed at runtime ────────────────────────────────────
+tests/
+docs/
+.git/
+.github/
+.pre-commit-config.yaml
+.secrets.baseline
+
+# ── Editors / OS ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# ── Docker / build artifacts ─────────────────────────────────
+Dockerfile
+.dockerignore
+docker-compose.yml

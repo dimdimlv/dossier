@@ -66,6 +66,23 @@ Early development. No functioning code yet — currently in design and bootstrap
 
 Choices are recorded as ADRs as they are made.
 
+## Run in Docker
+
+Dossier is a CLI, so the container is for on-demand invocation rather than a long-running service.
+With Docker installed and a populated `.env` (a valid `DOSSIER_DATA_PATH` pointing at your local
+`dossier-data` checkout, plus your API key):
+
+```bash
+docker compose build
+docker compose run --rm dossier db upgrade          # create/upgrade the tracker DB
+docker compose run --rm dossier inventory validate  # validate the mounted inventory
+docker compose run --rm dossier generate cv <jd>    # generate against a job description
+```
+
+Compose loads secrets from `.env` and bind-mounts your `dossier-data` directory to `/data` inside
+the container; the host `DOSSIER_DATA_PATH` selects the mount source. Rationale and trade-offs:
+[ADR-010](docs/adr/ADR-010-containerization.md).
+
 ## Roadmap
 
 - [x] **M0** — Project bootstrapped (README, repo layout, first ADRs)
@@ -74,7 +91,7 @@ Choices are recorded as ADRs as they are made.
 - [x] **M3** — CV generator
 - [x] **M4** — Cover letter generator
 - [x] **M5** — Application tracker with reminders — *schema, status history, document versioning, follow-ups, and manual reminder control + a due-follow-up digest*
-- [ ] **M6** — Containerization (Docker, docker-compose)
+- [x] **M6** — Containerization (Docker, docker-compose) — *multi-stage `uv` image, non-root, `docker compose run` for CLI invocation*
 - [ ] **M7** — CI/CD pipeline (GitHub Actions)
 - [ ] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana)
 
