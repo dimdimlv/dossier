@@ -81,7 +81,9 @@ Three parallel `ubuntu-latest` jobs:
 - **`docker`** — `docker/setup-buildx-action` → `docker/build-push-action` with `push: false` and
   GitHub Actions layer caching, building the M6 `Dockerfile`.
 
-Actions are pinned by major-version tag for readability.
+Actions are pinned by tag — major-version where a floating tag exists
+(`actions/checkout@v4`, `docker/*@v3`/`@v6`), and the exact release `astral-sh/setup-uv@v8.2.0`
+since setup-uv publishes no floating `v8` tag.
 
 ## Consequences
 
