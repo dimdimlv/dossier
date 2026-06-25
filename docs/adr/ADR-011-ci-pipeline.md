@@ -82,8 +82,9 @@ Three parallel `ubuntu-latest` jobs:
   GitHub Actions layer caching, building the M6 `Dockerfile`.
 
 Actions are pinned by tag — major-version where a floating tag exists
-(`actions/checkout@v4`, `docker/*@v3`/`@v6`), and the exact release `astral-sh/setup-uv@v8.2.0`
-since setup-uv publishes no floating `v8` tag.
+(`actions/checkout@v5`, `docker/setup-buildx-action@v4`, `docker/build-push-action@v7`), and the
+exact release `astral-sh/setup-uv@v8.2.0` since setup-uv publishes no floating `v8` tag. The
+Node 24-native majors avoid the runners' Node 20 deprecation warnings.
 
 ## Consequences
 
