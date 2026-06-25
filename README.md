@@ -1,5 +1,7 @@
 # Dossier
 
+[![CI](https://github.com/dimdimlv/dossier/actions/workflows/ci.yml/badge.svg)](https://github.com/dimdimlv/dossier/actions/workflows/ci.yml)
+
 A personal job-search system that turns a structured inventory of your professional self into tailored CVs and cover letters — and tracks the pipeline they feed.
 
 ---
@@ -92,7 +94,7 @@ the container; the host `DOSSIER_DATA_PATH` selects the mount source. Rationale 
 - [x] **M4** — Cover letter generator
 - [x] **M5** — Application tracker with reminders — *schema, status history, document versioning, follow-ups, and manual reminder control + a due-follow-up digest*
 - [x] **M6** — Containerization (Docker, docker-compose) — *multi-stage `uv` image, non-root, `docker compose run` for CLI invocation*
-- [ ] **M7** — CI/CD pipeline (GitHub Actions)
+- [x] **M7** — CI/CD pipeline (GitHub Actions) — *lint, type-check, tests, secret scan, and Docker build on every push/PR*
 - [ ] **M8** — Deployment to VPS, monitoring (Prometheus + Grafana)
 
 Milestones are sequential by default but the boundary between them is permeable — small pieces of M6+ infrastructure may slip in earlier when they make further development materially easier.

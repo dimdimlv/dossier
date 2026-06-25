@@ -20,6 +20,7 @@ Format follows Michael Nygard's ADR template, extended with an explicit "Conside
 | [008](ADR-008-cv-generation.md) | CV generation: Jinja2 templating, hybrid deterministic selection + LLM phrasing, draft/frozen separation | Accepted |
 | [009](ADR-009-cover-letter-generation.md) | Cover letter generation: composed prose with structured paragraphs and best-effort anti-fabrication | Accepted |
 | [010](ADR-010-containerization.md) | Containerization: uv multi-stage Docker image + docker-compose for CLI invocation | Accepted |
+| [011](ADR-011-ci-pipeline.md) | Continuous integration with GitHub Actions (lint, type-check, test, secret scan, Docker build) | Accepted |
 
 ## Status legend
 

@@ -1,0 +1,81 @@
+# Continuous integration (ADR-011).
+#
+# Runs the same quality gates locally enforced by hand — lint, type-check, tests,
+# the detect-secrets/hygiene pre-commit hooks, and a build of the M6 Docker image —
+# on every push to main and every pull request. No secrets are required: the test
+# suite uses temporary/in-memory fixtures and a fake LLM client.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: CI only reads the repo (no publishing — that is M8).
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, type-check & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: "0.9.7"
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Ruff (lint)
+        run: uv run ruff check .
+
+      - name: Mypy (type-check)
+        run: uv run mypy src
+
+      - name: Pytest
+        run: uv run pytest
+
+  pre-commit:
+    name: Secret scan & hygiene hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          version: "0.9.7"
+          enable-cache: true
+
+      - name: Run pre-commit hooks
+        run: uvx pre-commit run --all-files --show-diff-on-failure
+
+  docker:
+    name: Docker image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: dossier:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
